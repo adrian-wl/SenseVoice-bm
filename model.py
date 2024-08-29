@@ -648,7 +648,7 @@ class SenseVoiceSmall(nn.Module):
             normalize_length=self.length_normalized_loss,
         )
 
-        self.bmodel = EngineOV("bmodel/sensevoice_bm1684x_f32.bmodel")
+        self.bmodel = EngineOV("bmodel/sensevoice_bm1684x_f32.bmodel", device_id=kwargs.get('bm_dev', 0))
 
     @staticmethod
     def from_pretrained(model:str=None, **kwargs):
@@ -857,7 +857,6 @@ class SenseVoiceSmall(nn.Module):
         #     encoder_out = encoder_out[0]
 
         # bmodel Encoder
-        print(speech.shape)
         outputs = self.bmodel([speech.cpu().detach().numpy(), speech_lengths.cpu().detach().numpy()])
         encoder_out, encoder_out_lens = torch.from_numpy(outputs[0]).to(speech.device), torch.from_numpy(outputs[1].astype(np.int32)).to(speech.device)
 
