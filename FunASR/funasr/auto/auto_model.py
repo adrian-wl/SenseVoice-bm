@@ -384,8 +384,8 @@ class AutoModel:
             if len(sorted_data) > 0 and len(sorted_data[0]) > 0:
                 batch_size = max(batch_size, sorted_data[0][0][1] - sorted_data[0][0][0])
 
-            if kwargs["device"] == "cpu":
-                batch_size = 0
+            # if kwargs["device"] == "cpu":
+            #     batch_size = 0
 
             beg_idx = 0
             beg_asr_total = time.time()
@@ -406,6 +406,7 @@ class AutoModel:
                     j < n - 1
                     and sample_length < batch_size_threshold_ms
                     and potential_batch_length < batch_size
+                    and j + 1 - beg_idx < 10
                 ):
                     max_len_in_batch = max(max_len_in_batch, sample_length)
                     end_idx += 1

@@ -14,6 +14,9 @@ from funasr.losses.label_smoothing_loss import LabelSmoothingLoss
 from funasr.metrics.compute_acc import compute_accuracy, th_accuracy
 from funasr.utils.load_utils import load_audio_text_image_video, extract_fbank
 
+from run_bmodel import EngineOV
+import numpy as np
+
 
 class SinusoidalPositionEncoder(torch.nn.Module):
     """ """
@@ -637,19 +640,21 @@ class SenseVoiceSmall(nn.Module):
         self.textnorm_int_dict = {25016: 14, 25017: 15}
         self.embed = torch.nn.Embedding(7 + len(self.lid_dict) + len(self.textnorm_dict), input_size)
         self.emo_dict = {"unk": 25009, "happy": 25001, "sad": 25002, "angry": 25003, "neutral": 25004}
-        
+
         self.criterion_att = LabelSmoothingLoss(
             size=self.vocab_size,
             padding_idx=self.ignore_id,
             smoothing=kwargs.get("lsm_weight", 0.0),
             normalize_length=self.length_normalized_loss,
         )
-    
+
+        self.bmodel = EngineOV("bmodel/sensevoice_bm1684x_f32.bmodel")
+
     @staticmethod
     def from_pretrained(model:str=None, **kwargs):
         from funasr import AutoModel
         model, kwargs = AutoModel.build_model(model=model, trust_remote_code=True, **kwargs)
-        
+
         return model, kwargs
 
     def forward(
@@ -729,7 +734,7 @@ class SenseVoiceSmall(nn.Module):
 
         lids = torch.LongTensor([[self.lid_int_dict[int(lid)] if torch.rand(1) > 0.2 and int(lid) in self.lid_int_dict else 0 ] for lid in text[:, 0]]).to(speech.device)
         language_query = self.embed(lids)
-        
+
         styles = torch.LongTensor([[self.textnorm_int_dict[int(style)]] for style in text[:, 3]]).to(speech.device)
         style_query = self.embed(styles)
         speech = torch.cat((style_query, speech), dim=1)
@@ -828,7 +833,7 @@ class SenseVoiceSmall(nn.Module):
                 [[self.lid_dict[language] if language in self.lid_dict else 0]]
             ).to(speech.device)
         ).repeat(speech.size(0), 1, 1)
-        
+
         use_itn = kwargs.get("use_itn", False)
         textnorm = kwargs.get("text_norm", None)
         if textnorm is None:
@@ -846,10 +851,15 @@ class SenseVoiceSmall(nn.Module):
         speech = torch.cat((input_query, speech), dim=1)
         speech_lengths += 3
 
-        # Encoder
-        encoder_out, encoder_out_lens = self.encoder(speech, speech_lengths)
-        if isinstance(encoder_out, tuple):
-            encoder_out = encoder_out[0]
+        # # Encoder
+        # encoder_out, encoder_out_lens = self.encoder(speech, speech_lengths)
+        # if isinstance(encoder_out, tuple):
+        #     encoder_out = encoder_out[0]
+
+        # bmodel Encoder
+        print(speech.shape)
+        outputs = self.bmodel([speech.cpu().detach().numpy(), speech_lengths.cpu().detach().numpy()])
+        encoder_out, encoder_out_lens = torch.from_numpy(outputs[0]).to(speech.device), torch.from_numpy(outputs[1].astype(np.int32)).to(speech.device)
 
         # c. Passed the encoder result and the beam search
         ctc_logits = self.ctc.log_softmax(encoder_out)

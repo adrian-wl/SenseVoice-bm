@@ -1,0 +1,18 @@
+一.环境配置
+
+1.安装依赖
+pip3 install -r requirements.txt
+
+2.安装funasr
+cd FunASR && pip3 install -e ./
+
+3.根据系统架构选择性地安装tpu_perf
+pip3 install tpu_perf-1.2.35-py3-none-manylinux2014_x86_64.whl
+或者
+pip3 install tpu_perf-1.2.35-py3-none-manylinux2014_aarch64.whl
+
+二.推理
+
+支持任意格式音频输入, 支持任意时长输入, 具体参数说明可以参考README:
+python3 demo1.py
+
