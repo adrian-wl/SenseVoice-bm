@@ -17,6 +17,7 @@ model = AutoModel(
     vad_kwargs={"max_single_segment_time": 30000},
     device="cpu",
     bm_dev=0,
+    no_emo=False,
 )
 
 # en
