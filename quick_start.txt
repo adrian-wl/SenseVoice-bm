@@ -11,6 +11,10 @@ pip3 install tpu_perf-1.2.35-py3-none-manylinux2014_x86_64.whl
 或者
 pip3 install tpu_perf-1.2.35-py3-none-manylinux2014_aarch64.whl
 
+4.获取模型文件, 放在SenseVoice-bm/bmodel/目录下
+链接: https://cowtransfer.com/s/4ee01cda946844
+口令: 9o3e69
+
 二.推理
 
 支持任意格式音频输入, 支持任意时长输入, 具体参数说明可以参考README:
